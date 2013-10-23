@@ -472,6 +472,63 @@ function civicrm_entity_user_creatable($contact){
 function civicrm_entity_user_exists_or_creatable($contact){
   return civicrm_entity_action_load_create_user($contact);
 }
+/**
+ *
+ * @return multitype:multitype:string boolean NULL
+ */
+function civicrm_entity_action_info() {
+  return array(
+    'civicrm_entity_edit_action' => array(
+      'label' => t('Edit using API'),
+      'type' => 'civicrm_activity',
+      'configurable' => TRUE,
+      // 'pass rows' => TRUE,
+    ),
+  );
+}
+
+/**
+ *
+ * @param unknown $object
+ * @param array $context
+ */
+function civicrm_entity_edit_action(&$object, $context = array()) {
+  civicrm_api3('activity', 'create', array(
+    'id' => $object->id,
+    'assignee_contact_id' => $context['state'])
+  );
+}
+
+/**
+ *
+ * @param array $context
+ * @return multitype:string unknown
+ */
+function civicrm_entity_edit_action_form( $context = array()) {
+
+  $entities = _civicrm_entity_enabled_entities();
+  $entity = $entities[$context['entity_type']];
+  $fields = civicrm_api($entity, 'getfields', array('action' => 'create', 'version' => 3,));
+  foreach ($fields['values'] as $fieldname => $fieldSpecs){
+    if($fieldSpecs['type'] ==1 && $fieldname == 'assignee_contact_id'){
+      $form[$entity][$fieldname] = array(
+        '#type' => 'textfield',
+        '#title' => $fieldSpecs['title'],
+      );
+    }
+  }
+  return $form;
+}
+
+/**
+ *
+ * @param unknown $form
+ * @param unknown $form_state
+ * @return multitype:NULL
+ */
+function civicrm_entity_edit_action_submit($form, $form_state) {
+  return array('state' => $form_state['values']['assignee_contact_id']);
+}
 
 /**
  * Given a contact object return the Drupal user.
